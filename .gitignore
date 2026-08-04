@@ -4,11 +4,22 @@ __pycache__/
 build/
 dist/
 wheels/
-*.egg-info
+*.egg-info/
 
-# Virtual environments
-.venv
-.idea/ 
-*.lock
-resources/vectorstore
+# Environment
 .env
+.env.example
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Build artifacts
+build/
+dist/
+wheels/
+*.egg-info/
+
+# Local Qdrant database
+resources/vectorstore/
