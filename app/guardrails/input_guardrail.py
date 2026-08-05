@@ -25,6 +25,8 @@ once Phase 9 gives us real data on how often layer 2 actually fires.
 import json
 import logging
 
+from langsmith import traceable
+
 from app.guardrails.patterns import matches_injection_pattern
 from app.guardrails.schemas import GuardrailCategory, GuardrailResult
 from app.services.rag.generator import get_llm
@@ -78,6 +80,7 @@ def _run_llm_classifier(question: str) -> GuardrailResult:
     return GuardrailResult(allowed=allowed, category=category, reason=reason or category.value)
 
 
+@traceable(name="input_guardrail", run_type="chain")
 def run_input_guardrail(question: str) -> GuardrailResult:
     heuristic_hit = _run_heuristics(question)
     if heuristic_hit is not None:

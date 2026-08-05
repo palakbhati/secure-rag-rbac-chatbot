@@ -13,6 +13,7 @@ monitoring will track later.
 
 import logging
 
+from langsmith import traceable
 from qdrant_client.conversions.common_types import ScoredPoint
 
 from app.rbac.roles import Role, validate_role
@@ -21,6 +22,7 @@ from app.services.vector_store.qdrant_store import search as vector_search
 audit_logger = logging.getLogger("rbac.audit")
 
 
+@traceable(name="rbac_authorized_retrieval", run_type="retriever")
 def authorized_search(question: str, role: str, top_k: int = 5) -> list[ScoredPoint]:
     """Validates the role (fails closed on anything unrecognized), then
     performs a Qdrant-side filtered search — unauthorized chunks are

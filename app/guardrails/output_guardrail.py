@@ -25,6 +25,8 @@ in order:
 import logging
 import re
 
+from langsmith import traceable
+
 from app.guardrails.patterns import CURRENCY_AMOUNT_PATTERN, DATE_OF_BIRTH_PATTERN, EMAIL_PATTERN
 from app.guardrails.pii_redaction import redact_hr_pii
 from app.guardrails.schemas import GuardrailCategory, GuardrailResult
@@ -69,6 +71,7 @@ def _groundedness_score(answer: str, context_text: str) -> float:
     return len(overlap) / len(answer_words)
 
 
+@traceable(name="output_guardrail", run_type="chain")
 def run_output_guardrail(answer: str, chunks: list[DocumentChunk], role: str) -> GuardrailResult:
     context_text = "\n".join(c.text for c in chunks)
 
