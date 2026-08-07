@@ -86,6 +86,7 @@ def ask(question: str, role: str, user_id: str | None = None, top_k: int = 5) ->
     return {
         "answer": final_answer,
         "sources": [c.document_id for c in chunks],
+        "context_texts": [c.text for c in chunks],  # added in Phase 10: raw retrieved text, needed by Ragas evaluation
         "retrieved_departments": sorted({c.department for c in chunks}),
         "blocked": False,
         "output_guardrail_category": output_check.category.value,
