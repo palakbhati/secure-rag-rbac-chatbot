@@ -27,4 +27,4 @@ wheels/
 resources/vectorstore/
 resources/processed
 resources/evaluation
-
+resources/cost_tracking

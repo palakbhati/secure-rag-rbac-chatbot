@@ -26,6 +26,15 @@ CHANGED IN PHASE 9:
   surfaced to the caller as a graceful error response — and LangSmith
   still records it as a failed run either way, since @traceable logs
   exceptions before they propagate.
+CHANGED IN PHASE 12:
+- `generate()` now returns (answer, usage) instead of just answer —
+  updated the call site here to match.
+- After a successful generation, records token usage and calculates
+  cost via `record_usage()`, then checks daily/monthly spend against
+  budget thresholds. This happens AFTER generation succeeds (there's
+  nothing to bill for a blocked or failed request) but BEFORE the
+  function returns, so cost data is never silently lost even if
+  something later in the function were to fail.
 """
 
 import logging
@@ -36,6 +45,9 @@ from app.guardrails.input_guardrail import run_input_guardrail
 from app.guardrails.output_guardrail import run_output_guardrail
 from app.rbac.authorization import authorized_search
 from app.schemas.document import DocumentChunk
+from app.services.cost_tracking.budget import check_budget
+from app.services.cost_tracking.tracker import record_usage
+from app.core.config import get_settings
 from app.services.monitoring.tracing import configure_langsmith
 from app.services.rag.generator import generate
 from app.services.rag.prompt import build_messages
@@ -64,10 +76,20 @@ def ask(question: str, role: str, user_id: str | None = None, top_k: int = 5) ->
         chunks = [DocumentChunk.model_validate(r.payload) for r in results]
 
         messages = build_messages(question, chunks)
-        raw_answer = generate(messages)
+        raw_answer, usage = generate(messages)
 
         output_check = run_output_guardrail(raw_answer, chunks, role)
         final_answer = output_check.modified_content or raw_answer
+
+        settings = get_settings()
+        usage_record = record_usage(
+            user_id=user_id or "unknown",
+            role=role,
+            model=settings.groq_model_name,
+            input_tokens=usage["input_tokens"],
+            output_tokens=usage["output_tokens"],
+        )
+        budget_status = check_budget()
     except Exception:
         logger.exception("Pipeline error | user=%s | role=%s | question=%r", user_id, role, question)
         return {
@@ -79,8 +101,9 @@ def ask(question: str, role: str, user_id: str | None = None, top_k: int = 5) ->
         }
 
     logger.info(
-        "Q: %s | user=%s | role=%s | retrieved %d chunks | departments: %s | output_category=%s",
-        question, user_id, role, len(chunks), sorted({c.department for c in chunks}), output_check.category.value,
+        "Q: %s | user=%s | role=%s | retrieved %d chunks | departments: %s | output_category=%s | cost=$%.6f",
+        question, user_id, role, len(chunks), sorted({c.department for c in chunks}),
+        output_check.category.value, usage_record.estimated_cost_usd,
     )
 
     return {
@@ -90,6 +113,8 @@ def ask(question: str, role: str, user_id: str | None = None, top_k: int = 5) ->
         "retrieved_departments": sorted({c.department for c in chunks}),
         "blocked": False,
         "output_guardrail_category": output_check.category.value,
+        "usage": usage_record.model_dump(),
+        "budget_status": budget_status,
     }
 
 

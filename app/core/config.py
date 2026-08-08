@@ -7,8 +7,16 @@ calling os.getenv() ad hoc in scattered files — that's what Rules #9/#10
 All values have sane local-development defaults so the app runs out of
 the box without Docker or a hosted Qdrant instance; production deploys
 (Phase 14) override these via real environment variables.
+
+IMPORTANT (fixed in Phase 9): pydantic-settings parses .env into THIS
+Python object only — it does NOT set process environment variables.
+LangChain/LangSmith's tracing reads os.environ directly, so without the
+explicit propagation below, tracing could be "configured" in .env and
+still silently never activate. `get_settings()` now pushes the relevant
+values into os.environ as a side effect, once, the first time it's called.
 """
 
+import os
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -37,8 +45,35 @@ class Settings(BaseSettings):
     langchain_api_key: str | None = None
     langchain_project: str = "secure-rag-rbac-chatbot"
 
+    # --- Cost tracking / budget — used from Phase 12 onward ---
+    daily_budget_usd: float = 10.0
+    monthly_budget_usd: float = 200.0
+    budget_warning_threshold_pct: float = 0.80  # warn at 80% of budget
+    budget_critical_threshold_pct: float = 1.00  # critical alert at 100%
+
+
+def _propagate_langsmith_env(settings: Settings) -> None:
+    """LangChain's tracer and the langsmith SDK read os.environ directly.
+    We set BOTH the legacy LANGCHAIN_* names and the current LANGSMITH_*
+    names, since which one a given library version checks varies —
+    setting both costs nothing and avoids a silent no-op configuration."""
+    if not settings.langchain_tracing_v2:
+        return
+    for key, value in {
+        "LANGCHAIN_TRACING_V2": "true",
+        "LANGSMITH_TRACING": "true",
+        "LANGCHAIN_API_KEY": settings.langchain_api_key,
+        "LANGSMITH_API_KEY": settings.langchain_api_key,
+        "LANGCHAIN_PROJECT": settings.langchain_project,
+        "LANGSMITH_PROJECT": settings.langchain_project,
+    }.items():
+        if value:
+            os.environ[key] = value
+
 
 @lru_cache
 def get_settings() -> Settings:
     """Cached so we parse the environment once per process, not on every call."""
-    return Settings()
+    settings = Settings()
+    _propagate_langsmith_env(settings)
+    return settings
