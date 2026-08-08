@@ -13,4 +13,6 @@ ragas==0.2.15
 datasets>=3.0.0,<4.0
 langsmith>=0.1.140,<1.0
 python-dotenv>=1.0.1,<2.0
+pydantic>=2.9.0
 pydantic-settings>=2.5.0
+pytest>=8.3.0,<10.0

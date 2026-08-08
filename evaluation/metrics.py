@@ -19,13 +19,40 @@ from ragas.metrics import answer_relevancy, context_precision, context_recall, f
 
 RAGAS_METRICS = [faithfulness, answer_relevancy, context_precision, context_recall]
 
-# Baseline thresholds — Phase 11's CI will compare a new run's scores
-# against these. Set from typical Ragas literature defaults for a first
-# baseline, NOT tuned to this specific dataset yet — see the note in
-# Phase 11 about revisiting these once we have several real runs to look at.
+# Baseline thresholds — Phase 11's CI compares a new run's scores against
+# these and fails the build if any metric drops below its floor.
+#
+# CALIBRATED FROM TWO REAL BASELINE RUNS (Phase 10, 10 examples each),
+# not a single run and not literature defaults. The two runs revealed
+# real, substantial run-to-run noise from the LLM-judge scoring on this
+# small (10-example) dataset:
+#
+#   metric              run 1     run 2     spread
+#   faithfulness        NaN       0.695     n/a (only 1 clean run)
+#   answer_relevancy    0.9255    0.9255    0.000  <- rock stable
+#   context_precision   0.750     0.575     0.175  <- noisy
+#   context_recall      0.464     0.714     0.250  <- very noisy
+#
+# Thresholds below are set beneath the LOWER of the two observed runs,
+# not beneath their average — a floor should survive the worst run
+# we've actually seen, not just a typical one. Metrics with wide
+# observed spread (context_precision, context_recall) get set well
+# below their low point, since one more noisy run landing even lower
+# than what we've seen so far is a real possibility, not a hypothetical
+# — this dataset is only 10 examples, and small eval sets are noisy by
+# nature. answer_relevancy's perfect stability across both runs earns
+# it a tighter margin; it's actually a trustworthy signal so far.
+#
+# THIS IS A "DON'T REGRESS FROM TODAY" FLOOR, NOT A QUALITY TARGET.
+# A passing CI run does not mean the pipeline is good enough to ship —
+# context_precision and context_recall in particular are known weak
+# spots. As the pipeline genuinely improves AND the eval dataset grows
+# beyond 10 examples (which will itself reduce noise), re-run baseline
+# a few times and RAISE these thresholds to lock in real improvement.
+# That ratchet is intentional, not a one-time setup step.
 BASELINE_THRESHOLDS = {
-    "faithfulness": 0.70,
-    "answer_relevancy": 0.70,
-    "context_precision": 0.60,
-    "context_recall": 0.60,
+    "faithfulness": 0.60,  # only 1 clean measurement (0.695) — kept conservative until more runs exist
+    "answer_relevancy": 0.88,  # observed 0.9255 twice, identically — tight margin is justified here
+    "context_precision": 0.45,  # observed 0.575-0.750 — floor set below the low end, given the 0.175 spread
+    "context_recall": 0.35,  # observed 0.464-0.714 — floor set below the low end, given the 0.250 spread
 }

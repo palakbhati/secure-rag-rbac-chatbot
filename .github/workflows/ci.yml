@@ -1,0 +1,81 @@
+# Two separate jobs, deliberately:
+#
+# 1. unit-tests: fast, free, runs on every push. Pure Python logic
+#    (RBAC permission matrix) — no LLM calls, no cost, no external
+#    network dependency beyond installing packages.
+#
+# 2. rag-evaluation: slow (your last real run took ~18 minutes) and
+#    costs real Groq API usage (40 LLM calls per run: 10 questions x
+#    4 metrics). Gating this to pull_request only (not every push to
+#    every branch) means quick iteration on a feature branch doesn't
+#    burn Groq quota or wait 18 minutes on every commit — the full
+#    evaluation still runs before anything merges to main.
+#
+# rag-evaluation depends on unit-tests passing first (`needs:`) — no
+# reason to spend 18 minutes and API cost evaluating a build whose
+# basic RBAC logic is already broken.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: pytest tests/ -v
+
+  rag-evaluation:
+    needs: unit-tests
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run document ingestion
+        run: python -m app.services.ingestion.pipeline
+
+      - name: Build vector store
+        env:
+          # Local on-disk Qdrant mode (no QDRANT_URL set) — no server
+          # needed in CI, same as local dev (see Phase 4).
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: python -m app.services.vector_store.build
+
+      - name: Run RAG evaluation and check thresholds
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          LANGCHAIN_TRACING_V2: "false"  # keep CI runs out of your LangSmith project by default
+        run: python -m evaluation.check_thresholds
+
+      - name: Upload evaluation results
+        if: always()  # upload even if the threshold check failed — that's exactly when you want to inspect it
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-results
+          path: resources/evaluation/
