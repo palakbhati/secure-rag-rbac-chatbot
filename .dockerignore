@@ -1,0 +1,36 @@
+# Virtual environments — the image installs its own dependencies fresh;
+# copying a host venv in would bake in host-specific paths and possibly
+# the wrong OS's compiled packages entirely.
+.venv
+venv
+
+# Version control and CI config — irrelevant inside a running container
+.git
+.github
+
+# Python artifacts
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+*.egg-info
+
+# Secrets — NEVER baked into an image layer. Runtime secrets are
+# supplied via `docker run -e` or --env-file, never copied in.
+.env
+
+# Generated data — regenerated fresh at build time (ingestion + vector
+# store build run as RUN steps in the Dockerfile itself), so copying
+# stale local versions in would be both wasteful and potentially wrong
+# if your local copy is out of date with the current source documents.
+resources/vectorstore
+resources/processed
+resources/evaluation
+resources/cost_tracking
+
+# Dev-only code not needed by the running application — smaller image,
+# smaller attack surface. Still present in git and covered by CI
+# (Phase 11); simply not shipped inside the runtime container.
+tests
+evaluation
+.idea
