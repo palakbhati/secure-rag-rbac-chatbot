@@ -14,6 +14,7 @@
 # rag-evaluation depends on unit-tests passing first (`needs:`) — no
 # reason to spend 18 minutes and API cost evaluating a build whose
 # basic RBAC logic is already broken.
+# Phase 11 CI validation
 
 name: CI
 
