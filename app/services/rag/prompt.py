@@ -4,7 +4,7 @@ the ground rules, plus a user turn containing the retrieved context and
 the question.
 
 This is a SOFT control, not an enforced one — the model can still ignore
-these instructions. Phase 7's output guardrail is what actually checks
+these instructions. output guardrail is what actually checks
 groundedness after the fact; this prompt is the first, weakest layer,
 not the only one.
 """

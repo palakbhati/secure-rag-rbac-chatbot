@@ -1,5 +1,5 @@
 """
-Reads resources/processed/chunks.jsonl (Phase 3's output), embeds every
+Reads resources/processed/chunks.jsonl, embeds every
 chunk, and loads them into Qdrant. Kept as a separate step from
 ingestion so re-embedding (e.g. after switching embedding models) never
 requires re-parsing the source documents.

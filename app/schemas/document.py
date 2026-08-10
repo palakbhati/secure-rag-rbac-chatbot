@@ -3,8 +3,8 @@ Schema for a single retrievable unit of content.
 
 Every chunk — whether it came from a markdown document or a CSV row —
 is normalized into this shape before it reaches the vector store. This
-is the contract between ingestion (Phase 3), the vector store (Phase 4),
-and RBAC filtering (Phase 6): if a field is missing here, RBAC has
+is the contract between ingestion, the vector store,
+and RBAC filtering: if a field is missing here, RBAC has
 nothing to filter on.
 """
 
@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 
 class Classification(str, Enum):
     """
-    How sensitive this content is. Used by output guardrails (Phase 7),
+    How sensitive this content is. Used by output guardrails,
     not by the retrieval filter itself — classification and allowed_roles
     are deliberately separate checks, so a bug in one doesn't silently
     disable the other.

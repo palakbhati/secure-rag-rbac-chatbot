@@ -247,7 +247,7 @@ Open `http://localhost:8501`.
 
 ## Demo Accounts
 
-| Username | Password | Role |
+| Username | Role |
 |---|---|---|
 | Tony | engineering |
 | Sam | finance |

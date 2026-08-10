@@ -6,7 +6,7 @@ own document_id (employee_id) for precise citation later.
 Note: we deliberately do NOT filter or redact fields here. Ingestion's
 job is to tag `contains_pii=True` and pass the full row through — the
 decision about whether a specific field (salary, DOB) should appear in
-a generated answer belongs to the OUTPUT GUARDRAIL (Phase 7), which can
+a generated answer belongs to the OUTPUT GUARDRAIL, which can
 apply different rules per role. Redacting here would be a decision we
 can't undo later without re-ingesting.
 """

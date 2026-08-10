@@ -6,9 +6,9 @@ calling os.getenv() ad hoc in scattered files — that's what Rules #9/#10
 
 All values have sane local-development defaults so the app runs out of
 the box without Docker or a hosted Qdrant instance; production deploys
-(Phase 14) override these via real environment variables.
+override these via real environment variables.
 
-IMPORTANT (fixed in Phase 9): pydantic-settings parses .env into THIS
+IMPORTANT : pydantic-settings parses .env into THIS
 Python object only — it does NOT set process environment variables.
 LangChain/LangSmith's tracing reads os.environ directly, so without the
 explicit propagation below, tracing could be "configured" in .env and

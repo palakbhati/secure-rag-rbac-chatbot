@@ -24,8 +24,8 @@ def get_embedding_dimension() -> int:
 
 def embed_texts(texts: list[str]) -> list[list[float]]:
     """Batch-embeds a list of strings. Used both when loading chunks into
-    Qdrant (Phase 4) and when embedding a user's query at retrieval time
-    (Phase 5+) — same function, same model, so query and stored vectors
+    Qdrant and when embedding a user's query at retrieval time
+     — same function, same model, so query and stored vectors
     are always comparable."""
     model = _get_model()
     vectors = model.encode(texts, show_progress_bar=False, normalize_embeddings=True)

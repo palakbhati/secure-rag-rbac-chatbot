@@ -4,7 +4,7 @@ and which roles can retrieve it."
 
 This is intentionally a plain, readable data structure — not buried inside
 loader logic — so a security review can look at ONE file and answer
-"who can see what" without reading ingestion code. Phase 6 (RBAC) will
+"who can see what" without reading ingestion code. (RBAC) will
 import this same map to build retrieval-time filters, so ingestion-time
 tagging and query-time enforcement can never drift apart.
 """
