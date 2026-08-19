@@ -12,9 +12,14 @@ change; this table is not fetched live.
 
 # {model_name: {"input": $ per 1M input tokens, "output": $ per 1M output tokens}}
 GROQ_PRICING_PER_MILLION_TOKENS: dict[str, dict[str, float]] = {
+    # DECOMMISSIONED by Groq 2026-08-16 — no longer callable. Kept here
+    # (not deleted) so calculate_cost() can still correctly price any
+    # historical entries already written to resources/cost_tracking/
+    # usage.jsonl from before the decommission date. Never used for a
+    # new request going forward.
     "llama-3.1-8b-instant": {"input": 0.05, "output": 0.08},
     "llama-3.3-70b-versatile": {"input": 0.59, "output": 0.79},
-    "openai/gpt-oss-20b": {"input": 0.075, "output": 0.30},
+    "openai/gpt-oss-20b": {"input": 0.075, "output": 0.30},  # current default as of the 2026-08-19 migration
     "openai/gpt-oss-120b": {"input": 0.15, "output": 0.60},
 }
 

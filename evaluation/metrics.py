@@ -50,6 +50,18 @@ RAGAS_METRICS = [faithfulness, answer_relevancy, context_precision, context_reca
 # beyond 10 examples (which will itself reduce noise), re-run baseline
 # a few times and RAISE these thresholds to lock in real improvement.
 # That ratchet is intentional, not a one-time setup step.
+# ⚠️ STALE AS OF 2026-08-19: these thresholds were calibrated using
+# llama-3.1-8b-instant as BOTH the generation model and the Ragas judge
+# model (config.py's default at the time). Groq decommissioned that
+# model on 2026-08-16; the default is now openai/gpt-oss-20b (see
+# config.py's migration note). A different model can score meaningfully
+# differently on the exact same questions — these numbers have NOT been
+# re-verified against the new default. Until you re-run
+# `python -m evaluation.evaluate --debug` against the new model and
+# update the table below, treat CI's current pass/fail as informative
+# but not fully trustworthy: a real regression could pass, or a
+# perfectly fine answer under the new model could fail, purely because
+# the floor was set for a different model's behavior.
 BASELINE_THRESHOLDS = {
     "faithfulness": 0.60,  # only 1 clean measurement (0.695) — kept conservative until more runs exist
     "answer_relevancy": 0.88,  # observed 0.9255 twice, identically — tight margin is justified here

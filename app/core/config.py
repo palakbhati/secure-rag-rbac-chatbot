@@ -37,8 +37,19 @@ class Settings(BaseSettings):
     qdrant_collection_name: str = "finsolve_documents"
 
     # --- LLM (Groq) — used from Phase 5 onward ---
+    # MIGRATED 2026-08-19: llama-3.1-8b-instant was decommissioned by Groq
+    # on 2026-08-16 (official deprecation notice). openai/gpt-oss-20b is
+    # Groq's recommended replacement and was already priced in
+    # pricing.py's table, so no new pricing research was needed for this
+    # switch. IMPORTANT: the Phase 10/11 evaluation baseline (faithfulness/
+    # answer_relevancy/context_precision/context_recall thresholds in
+    # evaluation/metrics.py) was calibrated using llama-3.1-8b-instant as
+    # BOTH the generation model and the Ragas judge model. Those numbers
+    # do not automatically carry over to a different model — re-run the
+    # evaluation baseline against this new default before trusting CI's
+    # pass/fail gate on real changes.
     groq_api_key: str | None = None
-    groq_model_name: str = "llama-3.1-8b-instant"
+    groq_model_name: str = "openai/gpt-oss-20b"
 
     # --- LangSmith — used from Phase 9 onward ---
     langchain_tracing_v2: bool = False

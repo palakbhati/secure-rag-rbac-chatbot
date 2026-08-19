@@ -134,7 +134,9 @@ No passwords, API keys, or internal detection patterns are reproduced in this do
 
 The evaluation harness (`evaluation/`) runs a 10-question golden dataset through the real pipeline and scores results with Ragas, using Groq as the judge LLM.
 
-**Baseline thresholds, calibrated from two real evaluation runs, not assumed or copied from generic defaults:**
+> **⚠️ Stale as of 2026-08-19:** the baseline below was measured using `llama-3.1-8b-instant`, which Groq decommissioned on 2026-08-16. The project's default model has migrated to `openai/gpt-oss-20b` (see Cost Monitoring below), but this evaluation baseline has not yet been re-run against it — a different model can score differently on identical questions. Until it's re-run, treat CI's evaluation gate as informative but not fully trustworthy.
+
+**Baseline thresholds, calibrated from two real evaluation runs (against the now-decommissioned model), not assumed or copied from generic defaults:**
 
 | Metric | Run 1 | Run 2 | CI Threshold |
 |---|---|---|---|
@@ -157,10 +159,10 @@ Pricing is a flat lookup table (`app/services/cost_tracking/pricing.py`), verifi
 
 | Model | Input ($/1M tokens) | Output ($/1M tokens) |
 |---|---|---|
-| llama-3.1-8b-instant *(default)* | $0.05 | $0.08 |
+| openai/gpt-oss-20b *(default)* | $0.075 | $0.30 |
 | llama-3.3-70b-versatile | $0.59 | $0.79 |
-| openai/gpt-oss-20b | $0.075 | $0.30 |
 | openai/gpt-oss-120b | $0.15 | $0.60 |
+| ~~llama-3.1-8b-instant~~ *(decommissioned by Groq 2026-08-16, kept in the pricing table only to cost historical usage-log entries)* | $0.05 | $0.08 |
 
 Every request's actual input/output token counts (from Groq's response) are used to calculate a real per-request cost, appended to a local usage log. Daily and monthly spend are aggregated independently and checked against configurable budgets (defaults: **$10/day**, **$200/month**), with a **warning at 80%** of budget and a **critical alert at 100%** — logged, not enforced; the assistant does not refuse to answer employees because a budget number was crossed.
 
@@ -173,7 +175,7 @@ Every request's actual input/output token counts (from Groq's response) are used
 | Python 3.10 | Application language |
 | Streamlit | User interface |
 | LangChain / LangChain-Groq | LLM orchestration and Groq integration |
-| Groq | LLM inference (`llama-3.1-8b-instant` by default) |
+| Groq | LLM inference (`openai/gpt-oss-20b` by default — migrated 2026-08-19 after Groq decommissioned the prior default, `llama-3.1-8b-instant`) |
 | Qdrant | Vector store, with native role-based payload filtering |
 | Sentence-Transformers | Local embedding generation (`all-MiniLM-L6-v2`) |
 | Docling | Document parsing/ingestion |

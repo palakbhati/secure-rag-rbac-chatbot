@@ -23,7 +23,7 @@ WORKDIR /app
 # even if you've changed application code since. Reordering this after
 # `COPY . .` would invalidate the pip-install cache on every code change.
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --default-timeout=1000 --retries 10 -r requirements.txt
 
 COPY . .
 
